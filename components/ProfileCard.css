@@ -1,0 +1,180 @@
+
+.pc-card-wrapper {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    width: 100%;
+    /* Fixed Aspect Ratio for the Card to look like reference */
+    aspect-ratio: 3/5; 
+    min-height: 480px;
+    position: relative;
+    --card-radius: 36px;
+    --bg-card: #18181B;
+  }
+  
+  .pc-card-shell {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--rotate-x, 0deg)) rotateY(var(--rotate-y, 0deg));
+    transition: transform 0.1s cubic-bezier(0.05, 0.41, 0.25, 1);
+  }
+  
+  .pc-card-shell:not(.active) {
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  
+  .pc-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--card-radius);
+    background: var(--bg-card);
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    /* Subtle border */
+    box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 20px 40px -10px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  
+  /* --- 1. PHOTO SECTION (Top 65%) --- */
+  .pc-photo-container {
+    position: relative;
+    width: 100%;
+    height: 62%; /* Takes up top portion */
+    border-radius: 28px; /* Match internal curvature */
+    overflow: hidden;
+    z-index: 5;
+    background: #000;
+  }
+
+  .pc-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    transition: transform 0.5s ease;
+  }
+  
+  .pc-card-wrapper:hover .pc-photo {
+    transform: scale(1.03);
+  }
+
+  /* --- 2. INFO SECTION (Bottom 35%) --- */
+  .pc-info-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end; /* Align bottom */
+      padding: 16px 8px 8px 8px;
+      z-index: 10;
+      transform: translateZ(20px);
+      text-align: center; /* Center everything by default */
+  }
+
+  /* Name Row */
+  .pc-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: center; /* Center text */
+      gap: 6px;
+      margin-bottom: 2px;
+  }
+
+  .pc-name {
+      font-size: 1.6rem; /* Much bigger */
+      font-weight: 800; /* Bolder */
+      color: #fff;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+  }
+
+  /* Role/Title Container */
+  .pc-role-container {
+      margin-bottom: 20px;
+      min-height: 24px; /* Prevent layout jump */
+      display: flex;
+      justify-content: center;
+  }
+
+  /* Stats Row */
+  .pc-stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+  }
+
+  .pc-stats-group {
+      display: flex;
+      gap: 16px;
+  }
+
+  .pc-stat-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.9rem;
+  }
+  
+  .pc-stat-item svg {
+      color: #A1A1AA;
+  }
+
+  /* Action Button */
+  .pc-action-btn {
+      background: #fff;
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+  }
+
+  .pc-action-btn:hover {
+      background: #e4e4e7;
+      transform: translateY(-1px);
+  }
+
+  /* --- EFFECTS --- */
+  .pc-shine {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background: radial-gradient(
+      circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+      rgba(255, 255, 255, 0.08) 0%,
+      transparent 60%
+    );
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  .pc-glare {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.03) 45%,
+      rgba(255, 255, 255, 0.0) 50%
+    );
+    background-size: 200% 200%;
+    background-position: var(--background-x, 50%) var(--background-y, 50%);
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
