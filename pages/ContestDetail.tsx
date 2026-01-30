@@ -204,7 +204,7 @@ export const ContestDetail = () => {
                                 navigate('/onboarding');
                             }}
                         >
-                            Fix Profile ->
+                            Fix Profile &rarr;
                         </Button>
                     )}
                 </div>
