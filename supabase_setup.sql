@@ -37,6 +37,10 @@ create policy "Users can update own profile."
   using ( auth.uid() = id )
   with check ( auth.uid() = id );
 
+create policy "Users can delete own profile" 
+  on public.profiles for delete
+  using ( auth.uid() = id );
+
 -- 5. Create Influencers Table
 create table public.influencers (
   id uuid default uuid_generate_v4() primary key,
@@ -67,6 +71,10 @@ create policy "Users can insert own influencer profile"
 create policy "Users can update own influencer profile" 
   on public.influencers for update
   using ( auth.uid() = id OR exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin') );
+
+create policy "Users can delete own influencer profile" 
+  on public.influencers for delete
+  using ( auth.uid() = id );
 
 -- 6. Create Contests Table
 create table public.contests (

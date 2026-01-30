@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Play, Eye, Heart, ExternalLink, RefreshCw, Upload, Link as LinkIcon, Loader2, Music4, CheckCircle, AlertCircle, MessageSquare, Share2, Award, Clock, LayoutDashboard, List, TrendingUp, Users, Activity, BarChart3, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Play, Eye, Heart, ExternalLink, RefreshCw, Upload, Link as LinkIcon, Loader2, Music4, CheckCircle, AlertCircle, MessageSquare, Share2, Award, Clock, LayoutDashboard, List, TrendingUp, Users, Activity, BarChart3 } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input } from '../components/ui/core';
 import { mockService } from '../lib/supabase';
 import { Contest, ContestEntry, UserSession } from '../types';
@@ -99,6 +99,9 @@ export const ContestDetail = () => {
         ? ((totalLikes + totalComments + totalShares) / totalViews) * 100 
         : 0;
 
+    // Timeline Data (Accumulated Views based on submission date)
+    // In a real app, you'd likely have a separate 'daily_stats' table. 
+    // Here we simulate accumulation based on when the entry was submitted.
     const sortedEntries = [...entries].sort((a, b) => new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime());
     let runningViews = 0;
     const timelineData = sortedEntries.map(e => {
@@ -110,10 +113,11 @@ export const ContestDetail = () => {
         };
     });
 
+    // Top Niches
     const nicheMap: Record<string, number> = {};
     entries.forEach(e => {
         e.influencer?.niches?.forEach(n => {
-            nicheMap[n] = (nicheMap[n] || 0) + e.views; 
+            nicheMap[n] = (nicheMap[n] || 0) + e.views; // Weight by views
         });
     });
     const nicheData = Object.entries(nicheMap)
@@ -121,6 +125,7 @@ export const ContestDetail = () => {
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
+    // Top Performers for Bar Chart
     const topPerformers = [...entries]
         .sort((a, b) => b.score - a.score)
         .slice(0, 5)
@@ -187,18 +192,19 @@ export const ContestDetail = () => {
                          <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
                          <p className="text-sm text-red-400">{submissionError}</p>
                     </div>
+                    {/* Provide quick fix link if the error is about missing profile */}
                     {(submissionError.includes("onboarding") || submissionError.includes("Profile not found")) && (
                         <Button 
                             type="button" 
                             variant="secondary" 
                             size="sm" 
-                            className="self-end mt-1 text-xs flex items-center gap-1"
+                            className="self-end mt-1 text-xs"
                             onClick={() => {
                                 setIsJoinModalOpen(false);
                                 navigate('/onboarding');
                             }}
                         >
-                            Fix Profile <ArrowRight size={12} />
+                            Fix Profile ->
                         </Button>
                     )}
                 </div>

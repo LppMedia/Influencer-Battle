@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { BadgeCheck, Share2, User } from 'lucide-react';
 import './ProfileCard.css';
@@ -148,7 +147,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   const displayHandle = handle?.replace('https://www.tiktok.com/', '').replace(/\/$/, '').replace('@', '') || name;
 
   return (
-    <div ref={wrapRef} className={`pc-card-wrapper ${className}`.trim()}>
+    <div 
+      ref={wrapRef} 
+      className={`pc-card-wrapper ${className}`.trim()}
+      onClick={onActionClick}
+      style={{ cursor: onActionClick ? 'pointer' : 'default' }}
+    >
       <div 
         ref={shellRef} 
         className="pc-card-shell"
