@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
-import { BadgeCheck, Share2, User } from 'lucide-react';
+import { BadgeCheck, Share2, User, Flame } from 'lucide-react';
 import './ProfileCard.css';
 
 const ANIMATION_CONFIG = {
@@ -208,6 +208,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 <div className="pc-stat-item" title="TikTok Followers">
                    <User size={16} /> 
                    {followersCount}
+                </div>
+                <div className="pc-stat-item" title="Campaign Streak">
+                   <Flame size={16} className={campaignStreak > 0 ? "text-orange-500 fill-orange-500/20" : "text-zinc-600"} />
+                   {campaignStreak}
                 </div>
               </div>
 
