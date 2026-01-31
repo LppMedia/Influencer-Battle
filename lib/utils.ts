@@ -54,6 +54,37 @@ export function formatTimeAgo(dateString: string | undefined): string {
 }
 
 /**
+ * Cleans social media URLs by removing query parameters (tracking codes).
+ * e.g. https://www.tiktok.com/@user?lang=en -> https://www.tiktok.com/@user
+ */
+export function cleanSocialUrl(url: string): string {
+  if (!url) return '';
+  try {
+    // 1. If it's just a handle (@user), assume TikTok and format it
+    if (url.startsWith('@')) {
+        return `https://www.tiktok.com/${url}`;
+    }
+
+    // 2. Parse URL to strip query params
+    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+    
+    // 3. Clear all search parameters (tracking, lang, etc.)
+    urlObj.search = '';
+    
+    // 4. Remove trailing slash
+    let clean = urlObj.toString();
+    if (clean.endsWith('/')) {
+        clean = clean.slice(0, -1);
+    }
+    
+    return clean;
+  } catch (e) {
+    // If invalid URL, return original trimmed
+    return url.trim();
+  }
+}
+
+/**
  * Compresses an image file using browser Canvas API.
  * Resizes to max 800px width/height and converts to JPEG at 0.7 quality.
  */

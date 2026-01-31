@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { User, MapPin, Link as LinkIcon, Instagram, Sparkles, CheckCircle, AlertCircle, UploadCloud, Loader2, Users, Mail } from 'lucide-react';
 import { Card, Input, Button } from '../components/ui/core';
 import { supabase, uploadFile, triggerScrapingWebhook } from '../lib/supabase';
-import { compressImage } from '../lib/utils';
+import { compressImage, cleanSocialUrl } from '../lib/utils';
 import { UserSession } from '../types';
 
 interface Props {
@@ -136,6 +136,10 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
         ? parseInt(formData.followers.replace(/[^0-9]/g, '')) 
         : 0;
 
+      // CLEAN URLs
+      const cleanTikTok = cleanSocialUrl(formData.tiktok);
+      const cleanInsta = cleanSocialUrl(formData.instagram);
+
       // DEMO BYPASS for DB Insert
       if (user.id.startsWith('demo-')) {
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -143,8 +147,8 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
           await triggerScrapingWebhook({
             id: user.id,
             name: formData.name,
-            handle_tiktok: formData.tiktok,
-            handle_instagram: formData.instagram,
+            handle_tiktok: cleanTikTok,
+            handle_instagram: cleanInsta,
             followers: numericFollowers
           });
 
@@ -157,7 +161,7 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
       const { data: existingTikTok } = await supabase
         .from('influencers')
         .select('id')
-        .eq('handle_tiktok', formData.tiktok)
+        .eq('handle_tiktok', cleanTikTok)
         .neq('id', user.id)
         .maybeSingle();
         
@@ -166,14 +170,12 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
       }
 
       // 2. Insert or Update (Upsert) into influencers table
-      // Note: We save numericFollowers to 'tiktok_followers' so it shows up in UI immediately.
-      // The scraper will eventually overwrite this with accurate data.
       const { error: insertError } = await supabase.from('influencers').upsert({
         id: user.id, 
         name: formData.name,
         country: formData.country,
-        handle_tiktok: formData.tiktok,
-        handle_instagram: formData.instagram,
+        handle_tiktok: cleanTikTok,
+        handle_instagram: cleanInsta,
         avatar_url: finalAvatarUrl,
         tiktok_followers: numericFollowers,
         niches: ['Creator'],
@@ -184,8 +186,6 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
       }
 
       // 3. Update the user's profile role to 'influencer' only if not admin
-      // SAFETY CHECK: We verify against DB one last time to ensure we don't demote an Admin
-      // due to local state cache issues.
       const { data: currentProfile } = await supabase
         .from('profiles')
         .select('role')
@@ -193,7 +193,6 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
         .single();
       
       if (currentProfile && currentProfile.role !== 'admin') {
-          // Only upgrade to influencer if they aren't an admin
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ role: 'influencer' })
@@ -203,23 +202,23 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
       }
 
       // 4. Trigger External Automation
-      // Trigger scraping to get stats for the new profile
-      // await ensures it fires before navigation/reload
+      setLoadingStatus('Syncing stats...');
       await triggerScrapingWebhook({
         id: user.id,
         name: formData.name,
-        handle_tiktok: formData.tiktok,
-        handle_instagram: formData.instagram,
+        handle_tiktok: cleanTikTok,
+        handle_instagram: cleanInsta,
         followers: numericFollowers
       });
+
+      // 5. Safety Delay to ensure beacon/keepalive fetch has definitely initiated
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       if (onSuccess) {
         onSuccess();
       } else {
-        // Instead of hard reload, navigate to a main page.
-        // This ensures the webhook fetch request isn't cancelled by browser unloading.
         navigate('/home'); 
-        window.location.reload(); // Secondary hard reload to ensure state is fresh, but only after logic
+        window.location.reload(); 
       }
 
     } catch (err: any) {
@@ -241,7 +240,6 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
     );
   }
 
-  // If embedded in Modal, simplify layout
   const Container = isEmbedded ? 'div' : Card;
   const containerClasses = isEmbedded ? '' : 'p-8 border-t border-purple-500/30 shadow-glow';
 
@@ -273,7 +271,6 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
             </div>
           )}
 
-          {/* Row 1: Email (Read Only) & Name */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-secondary">Account Email</label>
@@ -296,7 +293,6 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
             </div>
           </div>
 
-          {/* Row 2: Country & Followers */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-secondary">Country</label>
@@ -321,7 +317,6 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
             </div>
           </div>
 
-          {/* Row 3: TikTok & Instagram */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-secondary">TikTok Handle</label>
@@ -332,6 +327,7 @@ export const InfluencerOnboarding: React.FC<Props> = ({ user: propUser, onSucces
                 icon={<LinkIcon size={16} />}
                 required
               />
+              <p className="text-[10px] text-zinc-500">Paste your profile link, we'll auto-format it.</p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-secondary">Instagram Handle (Optional)</label>

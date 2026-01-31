@@ -58,34 +58,38 @@ export const triggerScrapingWebhook = async (payload: any) => {
 
         console.log(`Triggering automation for [${targetTable}] ID: ${recordId}`);
 
-        // Convert payload to Query Params for GET request (matches n8n config)
-        const params = new URLSearchParams();
-        Object.entries(safePayload).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-                // If it's an object/array, stringify it
-                if (typeof value === 'object') {
-                    params.append(key, JSON.stringify(value));
-                } else {
-                    params.append(key, String(value));
-                }
-            }
-        });
-        
-        const finalUrl = `${AUTOMATION_WEBHOOK_URL}?${params.toString()}`;
+        // RELIABILITY FIX: 
+        // 1. Use POST instead of GET (prevents URL length limits).
+        // 2. Use keepalive: true (prevents request cancel on page unload).
+        // 3. Try to send as JSON, fallback to no-cors if n8n has CORS issues.
 
-        // RELIABILITY FIX: Use fetch with keepalive and no-cors.
-        // 'no-cors' allows sending data to opaque origins (like webhooks without explicit CORS headers)
-        // 'keepalive' ensures the request completes even if the page unloads/navigates immediately.
-        await fetch(finalUrl, {
-            method: 'GET',
-            mode: 'no-cors', 
+        const fetchOptions: RequestInit = {
+            method: 'POST',
+            body: JSON.stringify(safePayload),
             keepalive: true,
-        });
-        
-        console.log("Webhook triggered successfully:", finalUrl);
+        };
+
+        // Attempt standard fetch (preferred for JSON content-type)
+        try {
+            await fetch(AUTOMATION_WEBHOOK_URL, {
+                ...fetchOptions,
+                headers: { 'Content-Type': 'application/json' }
+            });
+            console.log("Webhook triggered successfully (Standard).");
+        } catch (corsError) {
+            console.warn("Standard webhook failed (CORS?), trying no-cors mode.", corsError);
+            
+            // Fallback: Fire and forget with no-cors. 
+            // Note: Content-Type header is often ignored in no-cors, so payload must be robust.
+            await fetch(AUTOMATION_WEBHOOK_URL, {
+                ...fetchOptions,
+                mode: 'no-cors' 
+            });
+            console.log("Webhook triggered successfully (No-CORS fallback).");
+        }
 
     } catch (e) {
-        console.warn("Webhook triggering failed (non-blocking):", e);
+        console.warn("Webhook triggering failed completely:", e);
     }
 };
 
@@ -428,20 +432,6 @@ export const mockService = {
         if (mockProfile) registeredHandle = mockProfile.handle_tiktok || '';
     }
 
-    if (registeredHandle) {
-        let cleanHandle = registeredHandle.toLowerCase().replace('https://', '').replace('http://', '').replace('www.', '').replace('tiktok.com/', '');
-        if (cleanHandle.endsWith('/')) cleanHandle = cleanHandle.slice(0, -1);
-        cleanHandle = cleanHandle.replace('@', '');
-        const cleanUrl = videoUrl.toLowerCase();
-        // Loose check if they pasted a link
-        if (videoUrl.includes('tiktok.com') && !cleanUrl.includes(cleanHandle)) {
-            // Optional: Enforce handle check strictly or warn
-            // throw new Error(`Security Check Failed: The video URL must match your registered TikTok handle (@${cleanHandle}).`);
-        }
-    } else {
-        throw new Error("Profile incomplete. Please add your TikTok handle in Settings before joining.");
-    }
-
     // --- 1. REAL USER LOGIC ---
     if (!user.id.startsWith('demo-')) {
         // Verification Streak Logic
@@ -471,7 +461,7 @@ export const mockService = {
         }
 
         // Pass ID to webhook to ensure targeted updates
-        triggerScrapingWebhook({
+        await triggerScrapingWebhook({
             type: 'contest_entry',
             entry_id: insertedEntry.id, 
             contest_id: contestId,
@@ -528,7 +518,7 @@ export const mockService = {
 
     MOCK_ENTRIES.push(newEntry);
 
-    triggerScrapingWebhook({
+    await triggerScrapingWebhook({
         type: 'contest_entry',
         contest_id: contestId,
         entry_id: newEntry.id,
@@ -583,6 +573,6 @@ export const mockService = {
      }).select().single();
      
      if (error) throw error;
-     if (data) triggerScrapingWebhook(data);
+     if (data) await triggerScrapingWebhook(data);
   }
 };

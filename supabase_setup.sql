@@ -1,4 +1,5 @@
 
+
 -- 1. Enable UUID Extension
 create extension if not exists "uuid-ossp";
 
@@ -105,6 +106,7 @@ create table public.contest_entries (
   contest_id uuid references public.contests(id) on delete cascade not null,
   influencer_id uuid references public.influencers(id) on delete cascade not null,
   video_url text not null,
+  video_file_url text, -- ADDED: Support for direct file upload URL
   views bigint default 0,
   likes bigint default 0,
   submitted_at timestamp with time zone default timezone('utc'::text, now()),

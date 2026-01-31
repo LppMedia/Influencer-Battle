@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, Play, Eye, Heart, ExternalLink, RefreshCw, Uploa
 import { Card, Button, Badge, Modal, Input } from '../components/ui/core';
 import { mockService, uploadFile } from '../lib/supabase';
 import { Contest, ContestEntry, UserSession } from '../types';
-import { formatNumber, formatTimeAgo, formatDate } from '../lib/utils';
+import { formatNumber, formatTimeAgo, formatDate, cleanSocialUrl } from '../lib/utils';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, PieChart, Pie
 } from 'recharts';
@@ -95,8 +95,9 @@ export const ContestDetail = () => {
 
         setSubmissionStatus('verifying');
 
-        // 2. Submit Entry to DB
-        await mockService.submitEntry(id, videoUrl, user, uploadedFileUrl);
+        // 2. Submit Entry to DB (Clean URL first)
+        const cleanUrl = cleanSocialUrl(videoUrl);
+        await mockService.submitEntry(id, cleanUrl, user, uploadedFileUrl);
         
         // Success State
         setSubmissionStatus('success');
@@ -285,12 +286,16 @@ export const ContestDetail = () => {
                 <div className="space-y-2">
                     <label className="text-xs uppercase font-bold text-secondary">TikTok Video URL</label>
                     <Input 
-                        placeholder="https://www.tiktok.com/@user/video/..." 
+                        placeholder="Paste your TikTok video link here..." 
                         icon={<LinkIcon size={16} />}
                         value={videoUrl}
                         onChange={(e) => setVideoUrl(e.target.value)}
-                        // Not required if file is present, but good practice
+                        required={!videoFile} // Required if no file
                     />
+                    <p className="text-[10px] text-zinc-500">
+                        Paste the full link (e.g. https://www.tiktok.com/@user/video/123...). 
+                        We will automatically clean any extra tracking parameters.
+                    </p>
                 </div>
             </div>
 
