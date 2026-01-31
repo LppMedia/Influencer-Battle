@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Play, Eye, Heart, ExternalLink, RefreshCw, Upload, Link as LinkIcon, Loader2, Music4, CheckCircle, AlertCircle, MessageSquare, Share2, Award, Clock, LayoutDashboard, List, TrendingUp, Users, Activity, BarChart3 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Play, Eye, Heart, ExternalLink, RefreshCw, Upload, Link as LinkIcon, Loader2, Music4, CheckCircle, AlertCircle, MessageSquare, Share2, Award, Clock, LayoutDashboard, List, TrendingUp, Users, Activity, BarChart3 } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input } from '../components/ui/core';
 import { mockService } from '../lib/supabase';
 import { Contest, ContestEntry, UserSession } from '../types';
@@ -198,13 +198,13 @@ export const ContestDetail = () => {
                             type="button" 
                             variant="secondary" 
                             size="sm" 
-                            className="self-end mt-1 text-xs"
+                            className="self-end mt-1 text-xs flex items-center gap-1"
                             onClick={() => {
                                 setIsJoinModalOpen(false);
                                 navigate('/onboarding');
                             }}
                         >
-                            Fix Profile &rarr;
+                            Fix Profile <ArrowRight size={14} />
                         </Button>
                     )}
                 </div>
