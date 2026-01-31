@@ -8,7 +8,8 @@ import {
   Menu, 
   Search, 
   Bell,
-  Home
+  Home,
+  Film
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button, Modal } from './ui/core';
@@ -24,6 +25,9 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const location = useLocation();
 
+  // Check if we are on the Feed page to toggle Fullscreen mode (Hide Header)
+  const isFeedPage = location.pathname === '/feed';
+
   // Mandatory Onboarding Logic:
   // 1. Admins are exempt. (Case insensitive check for safety)
   // 2. Influencers must have a profile (`hasProfile` check from DB).
@@ -32,6 +36,7 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout }) => {
 
   const navItems = [
     { icon: <Home size={20} />, label: 'Home', path: '/home', roles: ['admin', 'influencer'] },
+    { icon: <Film size={20} />, label: 'Feed', path: '/feed', roles: ['admin', 'influencer'] },
     { icon: <Users size={20} />, label: 'Influencers', path: '/influencers', roles: ['admin', 'influencer'] },
     { icon: <Trophy size={20} />, label: 'Contests', path: '/contests', roles: ['admin', 'influencer'] },
     { icon: <Settings size={20} />, label: 'Settings', path: '/settings', roles: ['admin', 'influencer'] },
@@ -41,10 +46,10 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout }) => {
   const filteredNavItems = navItems.filter(item => item.roles.includes(user.role));
 
   return (
-    <div className="min-h-screen bg-background text-primary flex">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-black text-primary flex">
+      {/* Sidebar - z-[100] to ensure it covers everything including feed videos */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-white/5 transform transition-transform duration-300 lg:relative lg:translate-x-0",
+        "fixed inset-y-0 left-0 z-[100] w-64 bg-surface border-r border-white/5 transform transition-transform duration-300 lg:relative lg:translate-x-0",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="h-full flex flex-col">
@@ -67,6 +72,7 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout }) => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
                 className={({ isActive }) => cn(
                   "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
                   isActive 
@@ -94,51 +100,67 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
-        <header className="h-16 border-b border-white/5 bg-background/50 backdrop-blur-xl sticky top-0 z-40 px-4 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button 
-              className="lg:hidden p-2 text-muted hover:text-white"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              <Menu size={20} />
-            </button>
-            <h2 className="text-sm font-medium text-secondary capitalize">
-              {location.pathname.split('/')[1] || 'Dashboard'}
-            </h2>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="relative hidden md:block w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className="w-full bg-surface border border-white/5 rounded-full pl-9 pr-4 py-1.5 text-sm text-white placeholder:text-muted focus:outline-none focus:border-purple-500/50"
-              />
+        {/* Topbar - HIDDEN ON FEED PAGE FOR IMMERSION */}
+        {!isFeedPage && (
+          <header className="h-16 border-b border-white/5 bg-background/50 backdrop-blur-xl sticky top-0 z-40 px-4 lg:px-8 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button 
+                className="lg:hidden p-2 text-muted hover:text-white"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                <Menu size={20} />
+              </button>
+              <h2 className="text-sm font-medium text-secondary capitalize">
+                {location.pathname.split('/')[1] || 'Dashboard'}
+              </h2>
             </div>
-            <button className="p-2 text-muted hover:text-white relative">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-pink-500 rounded-full"></span>
-            </button>
-            <div className="w-8 h-8 rounded-full bg-gradient-brand p-[1px]">
-              <div className="w-full h-full rounded-full bg-surface overflow-hidden">
-                <img src={`https://ui-avatars.com/api/?name=${user.email}&background=random`} alt="User" className="w-full h-full object-cover" />
+
+            <div className="flex items-center gap-4">
+              <div className="relative hidden md:block w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                <input 
+                  type="text" 
+                  placeholder="Search..." 
+                  className="w-full bg-surface border border-white/5 rounded-full pl-9 pr-4 py-1.5 text-sm text-white placeholder:text-muted focus:outline-none focus:border-purple-500/50"
+                />
+              </div>
+              <button className="p-2 text-muted hover:text-white relative">
+                <Bell size={20} />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-pink-500 rounded-full"></span>
+              </button>
+              <div className="w-8 h-8 rounded-full bg-gradient-brand p-[1px]">
+                <div className="w-full h-full rounded-full bg-surface overflow-hidden">
+                  <img src={`https://ui-avatars.com/api/?name=${user.email}&background=random`} alt="User" className="w-full h-full object-cover" />
+                </div>
               </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto relative">
+        {/* 
+           If on Feed page, we remove the overflow-hidden constraint from main to allow the Feed component
+           to manage its own scrolling and viewport height perfectly.
+        */}
+        <main className={cn("flex-1 relative", !isFeedPage && "overflow-hidden")}>
+          {/* Mobile Menu Button - Show absolute on Feed page since header is gone. z-[60] to stay above video overlays (z-50 max) */}
+          {isFeedPage && (
+              <button 
+                className="absolute top-4 left-4 z-[60] p-3 bg-black/40 backdrop-blur-md rounded-full text-white lg:hidden border border-white/20 shadow-lg hover:bg-black/60 active:scale-95 transition-all"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                <Menu size={24} />
+              </button>
+          )}
+          
           {/* We pass the user object to all child routes */}
           <Outlet context={{ user }} />
         </main>
       </div>
       
-      {/* Overlay for mobile sidebar */}
+      {/* Overlay for mobile sidebar - z-[90] */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[90] lg:hidden animate-in fade-in duration-200"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}

@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Home } from './pages/Home';
+import { Feed } from './pages/Feed';
 import { Influencers } from './pages/Influencers';
 import { InfluencerDetail } from './pages/InfluencerDetail';
 import { Contests } from './pages/Contests';
@@ -140,6 +141,7 @@ const App: React.FC = () => {
         <Route element={user ? <Layout user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}>
           <Route path="/" element={<Navigate to="/home" />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/feed" element={<Feed />} />
           <Route path="/influencers" element={<Influencers />} />
           <Route path="/influencers/:id" element={<InfluencerDetail />} />
           <Route path="/contests" element={<Contests />} />

@@ -60,7 +60,8 @@ export interface ContestEntry {
   id: string;
   contest_id: string;
   influencer_id: string;
-  video_url: string;
+  video_url: string;      // The TikTok Link (for verification/traffic)
+  video_file_url?: string; // The Raw MP4 File (for native playback)
   views: number;
   likes: number;
   comments: number;
